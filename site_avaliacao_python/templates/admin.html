@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen p-6">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-10" data-aos="fade-down">
+            <div>
+                <h1 class="text-4xl font-black gt">Dashboard Admin - Python</h1>
+                <p class="text-slate-400">Monitoramento em tempo real das avaliações (Python).</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-gold"></span>
+                </span>
+                <span class="text-xs font-bold uppercase tracking-widest text-gold">ATUALIZAÇÃO EM TEMPO REAL</span>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div class="stat-card" data-aos="zoom-in" data-aos-delay="100">
+                <p class="text-xs font-bold text-slate-500 uppercase mb-2">Total de Avaliações</p>
+                <h2 id="total" class="text-4xl font-black text-white">-</h2>
+            </div>
+            <div class="stat-card" data-aos="zoom-in" data-aos-delay="200">
+                <p class="text-xs font-bold text-slate-500 uppercase mb-2">Média Geral</p>
+                <h2 id="media" class="text-4xl font-black text-gold">-</h2>
+            </div>
+            <div class="stat-card" data-aos="zoom-in" data-aos-delay="300">
+                <p class="text-xs font-bold text-slate-500 uppercase mb-2">Satisfação</p>
+                <h2 id="distribuicao" class="text-4xl font-black text-white">-%</h2>
+            </div>
+        </div>
+
+        <div class="cp mb-12" data-aos="fade-up">
+            <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gold" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 112 0v12a1 1 0 11-2 0V4z" />
+                </svg>
+                Distribuição
+            </h3>
+            <div id="distContainer" class="space-y-4">
+            </div>
+        </div>
+
+        <div>
+            <h3 class="text-xl font-bold mb-6 flex items-center gap-2" data-aos="fade-right">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                </svg>
+                Feedback dos Usuários
+            </h3>
+            <div id="lista" class="space-y-4">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function updateDashboard() {
+        try {
+            const response = await fetch('/api/status');
+            const data = await response.json();
+
+            document.getElementById('total').textContent = data.total;
+            document.getElementById('media').textContent = data.media;
+            document.getElementById('distribuicao').textContent = Math.round((data.media / 5) * 100) + '%';
+
+            const distContainer = document.getElementById('distContainer');
+            distContainer.innerHTML = '';
+            for (let i = 5; i >= 1; i--) {
+                const count = data.distribuicao[i] || 0;
+                const percent = data.total > 0 ? (count / data.total) * 100 : 0;
+                distContainer.innerHTML += `
+                    <div class="flex items-center gap-4">
+                        <span class="w-4 text-xs font-bold text-slate-400">${i}★</span>
+                        <div class="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
+                            <div class="h-full bg-gold transition-all duration-1000" style="width: ${percent}%"></div>
+                        </div>
+                        <span class="w-8 text-xs text-right text-slate-500">${count}</span>
+                    </div>
+                `;
+            }
+
+            const lista = document.getElementById('lista');
+            let newListHTML = '';
+            data.recente.forEach(eval => {
+                const stars = '★'.repeat(eval.nota) + '☆'.repeat(5 - eval.nota);
+                newListHTML += `
+                    <div class="eval-block" data-id="${eval.id}">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 class="font-bold text-white">${eval.nome}</h4>
+                                <span class="text-gold text-xs tracking-tighter">${stars}</span>
+                            </div>
+                            <span class="text-[10px] text-slate-600 uppercase font-mono">${eval.horario}</span>
+                        </div>
+                        <p class="text-slate-400 text-sm leading-relaxed">${eval.comentario || '<em class="opacity-50 italic">Sem comentário</em>'}</p>
+                    </div>
+                `;
+            });
+            lista.innerHTML = newListHTML;
+        } catch (error) {
+            console.error('Error updating dashboard:', error);
+        }
+    }
+    updateDashboard();
+    setInterval(updateDashboard, 5000);
+</script>
+{% endblock %}

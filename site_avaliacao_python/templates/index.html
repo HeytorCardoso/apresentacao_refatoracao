@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-[375px]" data-aos="fade-up">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-black gt mb-2">Avalie Agora</h1>
+            <p class="text-slate-400 text-sm">Sua opinião é fundamental para nosso grupo.</p>
+        </header>
+
+        <main class="cp">
+            <form id="FormAva" class="space-y-6">
+                <div class="input-group">
+                    <input type="text" name="nome" id="nome" placeholder=" " required>
+                    <label for="nome">Seu Nome</label>
+                </div>
+
+                <div class="py-4">
+                    <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-gold/60 mb-4 text-center">Sua Avaliação</label>
+                    <div class="star-rating">
+                        <input type="radio" id="star5" name="nota" value="5" /><label for="star5">★</label>
+                        <input type="radio" id="star4" name="nota" value="4" /><label for="star4">★</label>
+                        <input type="radio" id="star3" name="nota" value="3" /><label for="star3">★</label>
+                        <input type="radio" id="star2" name="nota" value="2" /><label for="star2">★</label>
+                        <input type="radio" id="star1" name="nota" value="1" /><label for="star1">★</label>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <textarea name="comentario" id="comentario" rows="4" placeholder=" "></textarea>
+                    <label for="comentario">Seu Feedback (Opcional)</label>
+                </div>
+
+                <button type="submit" class="w-full btn-primary uppercase tracking-widest text-sm py-5 shadow-xl shadow-gold/10">
+                    Enviar Avaliação
+                </button>
+            </form>
+
+            <div id="successMsg" class="hidden text-center py-8">
+                <div class="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold mb-2">Obrigado!</h3>
+                <p class="text-slate-400">Sua avaliação foi enviada com sucesso.</p>
+                <button onclick="location.reload()" class="mt-6 text-gold underline text-sm">Enviar outra</button>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('FormAva').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        try {
+            const response = await fetch('/avaliacao', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                document.getElementById('FormAva').classList.add('hidden');
+                document.getElementById('successMsg').classList.remove('hidden');
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Erro ao enviar avaliação.');
+        }
+    });
+</script>
+{% endblock %}
