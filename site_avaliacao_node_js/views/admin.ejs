@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - Node.js</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { royal: '#020306', gold: '#D4AF37' } } } }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="blob-container">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+    <div class="min-h-screen p-6">
+        <div class="max-w-4xl mx-auto">
+            <header class="flex justify-between items-center mb-10" data-aos="fade-down">
+                <div>
+                    <h1 class="text-4xl font-black gt">Dashboard Admin - Node.JS</h1>
+                    <p class="text-slate-400">Monitoramento em tempo real das avaliações (Node.Js).</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-gold"></span></span>
+                    <span class="text-xs font-bold uppercase tracking-widest text-gold">ATUALIZAÇÃO EM TEMPO REAL</span>
+                </div>
+            </header>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div class="stat-card" data-aos="zoom-in" data-aos-delay="100"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Total de Avaliações</p><h2 id="totalEvals" class="text-4xl font-black text-white">-</h2></div>
+                <div class="stat-card" data-aos="zoom-in" data-aos-delay="200"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Média Geral</p><h2 id="avgRating" class="text-4xl font-black text-gold">-</h2></div>
+                <div class="stat-card" data-aos="zoom-in" data-aos-delay="300"><p class="text-xs font-bold text-slate-500 uppercase mb-2">Satisfação</p><h2 id="satisfaction" class="text-4xl font-black text-white">-%</h2></div>
+            </div>
+            <div class="cp mb-12" data-aos="fade-up">
+                <h3 class="text-lg font-bold mb-6 flex items-center gap-2">Distribuição</h3>
+                <div id="distContainer" class="space-y-4"></div>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold mb-6">Feedback dos Usuários</h3>
+                <div id="evalsList" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true });
+        async function updateDashboard() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                document.getElementById('totalEvals').textContent = data.total;
+                document.getElementById('avgRating').textContent = data.media;
+                document.getElementById('satisfaction').textContent = Math.round((data.media / 5) * 100) + '%';
+                let distHTML = '';
+                for (let i = 5; i >= 1; i--) {
+                    const count = data.distribuicao[i] || 0;
+                    const percent = data.total > 0 ? (count / data.total) * 100 : 0;
+                    distHTML += `<div class="flex items-center gap-4"><span class="w-4 text-xs font-bold text-slate-400">${i}★</span><div class="flex-1 h-2 bg-white/5 rounded-full overflow-hidden"><div class="h-full bg-gold transition-all duration-1000" style="width: ${percent}%"></div></div><span class="w-8 text-xs text-right text-slate-500">${count}</span></div>`;
+                }
+                document.getElementById('distContainer').innerHTML = distHTML;
+                let listHTML = '';
+                data.recente.forEach(e => {
+                    const stars = '★'.repeat(e.nota) + '☆'.repeat(5 - e.nota);
+                    listHTML += `<div class="eval-block"><div class="flex justify-between items-start mb-2"><div><h4 class="font-bold text-white">${e.nome}</h4><span class="text-gold text-xs">${stars}</span></div><span class="text-[10px] text-slate-600 font-mono">${e.horario}</span></div><p class="text-slate-400 text-sm">${e.comentario || 'Sem comentário'}</p></div>`;
+                });
+                document.getElementById('evalsList').innerHTML = listHTML;
+            } catch (err) { console.error(err); }
+        }
+        updateDashboard();
+        setInterval(updateDashboard, 5000);
+    </script>
+</body>
+</html>
